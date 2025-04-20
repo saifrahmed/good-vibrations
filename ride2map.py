@@ -1,13 +1,44 @@
 import argparse
+
 import pandas as pd
-import folium
-from folium.plugins import AntPath
+
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 from scipy.signal import butter, filtfilt
 
+import folium
+from folium.plugins import AntPath
+
+# ----- Analysis Parameters -----
+CUTOFF = 1.0 # Cutoff frequency in Hz. Frequencies below this will be filtered out.
+FS = 33 # Sampling rate in Hz. How many samples per second your data was recorded at
+# TODO: Make this dynamically calculated based on the data
+ORDER = 3 # The sharpness of the filter. Higher = sharper cutoff, but can cause ringing artifacts.
+WINDOW_SIZE = 15 # The number of samples to use for each window of data.
+
+# What you want | Set cutoff to... | Notes
+# Keep only short, sharp bumps (rocks) | >1.5 Hz | May lose road motion too
+# Preserve road smoothness | 0.8 – 1.0 Hz | Good starting point
+# Remove all slow leg motion/phone sway | ~1.5 Hz | Stronger filtering
+# You sample slowly (e.g. fs = 10 Hz) | Lower cutoff (e.g. 0.3 – 0.5 Hz) | Can't filter above Nyquist (fs/2)
+# -------------------------------- 
+
+# ----- Output Parameters -----
+DEFAULT_OUTPUT_FILE = 'map.html'
+OUT_SEGMENT_WEIGHT = 6
+OUT_SEGMENT_OPACITY = 0.8
+OUT_SEGMENT_DASH_ARRAY = [10, 20]
+OUT_SEGMENT_DELAY = 100
+# -----------------------------
+
+
 # === High-pass filter ===
-def highpass_filter(data, cutoff=1.0, fs=50, order=3):
+# This is a Butterworth high-pass filter used to remove slow/smooth movements 
+# (like leg motion or gravity drift) 
+# and isolate short, sharp bumps — the kind you'd expect on gravel or rocks.
+
+def highpass_filter(data, cutoff=CUTOFF, fs=FS, order=ORDER):
+    # Nyquist frequency = Half the sampling rate
     nyq = 0.5 * fs
     norm_cutoff = cutoff / nyq
     b, a = butter(order, norm_cutoff, btype='high', analog=False)
@@ -45,7 +76,7 @@ def ride2map(input_file, output_file):
     )
 
     # === Feature engineering ===
-    window_size = 20
+    window_size = WINDOW_SIZE
     features = pd.DataFrame()
     features['vibration_energy_avg'] = sensor_data['vibration_energy'].rolling(window=window_size).mean()
     features['speed_avg'] = sensor_data['locationSpeed(m/s)'].rolling(window=window_size).mean()
@@ -100,10 +131,10 @@ def ride2map(input_file, output_file):
             AntPath(
                 locations=segment,
                 color=color_map.get(last_terrain, 'gray'),
-                weight=6,
-                opacity=0.8,
-                dash_array=[10, 20],
-                delay=500
+                weight=OUT_SEGMENT_WEIGHT,
+                opacity=OUT_SEGMENT_OPACITY,
+                dash_array=OUT_SEGMENT_DASH_ARRAY,
+                delay=OUT_SEGMENT_DELAY
             ).add_to(m)
             segment = []
 
@@ -115,10 +146,10 @@ def ride2map(input_file, output_file):
         AntPath(
             locations=segment,
             color=color_map.get(last_terrain, 'gray'),
-            weight=6,
-            opacity=0.8,
-            dash_array=[10, 20],
-            delay=200
+            weight=OUT_SEGMENT_WEIGHT,
+            opacity=OUT_SEGMENT_OPACITY,
+            dash_array=OUT_SEGMENT_DASH_ARRAY,
+            delay=OUT_SEGMENT_DELAY
         ).add_to(m)
 
     m.save(output_file)
@@ -141,7 +172,7 @@ def main():
           """)
     parser = argparse.ArgumentParser(description='Convert ride telemetry data to an interactive map.')
     parser.add_argument('input_file', help='Path to the input CSV file containing ride telemetry data')
-    parser.add_argument('--output', '-o', default='map.html', help='Path to the output HTML file for the map (default: map.html)')
+    parser.add_argument('--output', '-o', default=DEFAULT_OUTPUT_FILE, help=f'Path to the output HTML file for the map (default: {DEFAULT_OUTPUT_FILE})')
     
     args = parser.parse_args()
     
