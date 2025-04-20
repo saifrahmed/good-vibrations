@@ -3,6 +3,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+*_my_iOS_device.csv
+
 # C extensions
 *.so
 
