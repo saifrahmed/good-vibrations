@@ -13,9 +13,15 @@ Project overview: https://youtu.be/vsSyaQ-A7XM
 
 ![Output Map](preview.jpeg?raw=true  "Output Map")
 
-  
+ 
+## Pet Project Roadmap
+- Persist telemetry from past rides to crowd-source road conditions across many rides and potentially across many riders
+- Accept streaming input of SensorLog telemetry to avoid cli-geekery to achieve all this
+ - Interactive application where you input starting and ending location, ride type desired (or tolerable) and a dynamic route is generated based on ground conditions
+ - Warning notifications for bumps on the road based on actual rider location
 
-We capture all the below telemetry from the iPhone:
+## Telemetry Details
+We captured all the below sensor data from the iPhone to achieve this:
 
   
 
@@ -69,7 +75,7 @@ We capture all the below telemetry from the iPhone:
 
 -  __accelerometerAccelerationZ (G)__&nbsp;&#8592; used for classification feature engineering
 
-- __gyroTimestamp_sinceReboot (s)
+- gyroTimestamp_sinceReboot (s)
 
 -  __gyroRotationX (rad/s)__&nbsp;&#8592; used for classification feature engineering
 
