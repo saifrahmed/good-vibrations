@@ -10,7 +10,7 @@ Use iPhone telemetry to classify your rides, road conditions, and road types.
 Project overview: https://youtu.be/vsSyaQ-A7XM
 
   
-
+Here is a ride in Mercer Meadows near Princeton:
 ![Output Map](preview.jpeg?raw=true  "Output Map")
 
  
